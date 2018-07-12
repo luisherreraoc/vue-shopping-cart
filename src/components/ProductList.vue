@@ -8,13 +8,18 @@
         <ul v-else>
             <li v-for="product in products" :key="product.id">
                 {{ product.title }} - {{ product.price | currency }} - {{ product.inventory }}
-                <button @click="addProductToCart(product)">Add to cart</button>
+                <button @click="addProductToCart(product)"
+                        :disabled="!productIsInStock(product)">
+                    Add to cart
+                </button>
             </li>
         </ul>    
     </div>
 </template>
 
 <script>
+
+import {mapState, mapGetters, mapActions} from 'vuex'
 
 export default {
     data () {
@@ -23,18 +28,24 @@ export default {
         }
     },
     computed: {
-        products () {
-            return this.$store.getters.availableProducts;
-        }
+        /// ES7 spread operator
+        ...mapState('products', {
+            products: state => state.products
+        }),
+        ...mapGetters('products', {
+            productIsInStock: 'productIsInStock'
+        })
     },
     methods: {
-        addProductToCart(product) {
-            this.$store.dispatch('addProductToCart', product)
-        }
+        ...mapActions({
+            fetchProducts: 'products/fetchProducts',
+            addProductToCart: 'cart/addProductToCart'
+        })
     },
     created () {
         this.loading = true;
-        this.$store.dispatch('fetchProducts' /* payload if any */)
+        // this.$store.dispatch('fetchProducts' /* payload if any */)
+        this.fetchProducts()
         .then(() => this.loading = false)
     }
 }
